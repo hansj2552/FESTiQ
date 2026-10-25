@@ -47,7 +47,6 @@ for (let date = new Date(firstDate); date <= lastDate; date.setUTCDate(date.getU
       pageNo,
       numOfRows: pageSize,
       arrange: 'A',
-      listYN: 'Y',
     })) url.searchParams.set(name, String(value));
 
     const response = await fetch(url, { signal: AbortSignal.timeout(30_000) });
@@ -56,7 +55,7 @@ for (let date = new Date(firstDate); date <= lastDate; date.setUTCDate(date.getU
 
     const payload = await response.json();
     if (payload?.resultCode || payload?.resultMsg) {
-      throw new Error(`TourAPI gateway error: resultCode=${payload.resultCode || 'unknown'}, resultMsg=${payload.resultMsg || 'no message'}. Check the endpoint, API service approval, and the Decoding key saved as TOURAPI_SERVICE_KEY. The request stopped before further date queries.`);
+      throw new Error(`TourAPI gateway error: resultCode=${payload.resultCode || 'unknown'}, resultMsg=${payload.resultMsg || 'no message'}. The request stopped before further date queries.`);
     }
     const gatewayError = payload?.cmmMsgHeader;
     if (gatewayError) {
