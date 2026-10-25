@@ -25,6 +25,10 @@ const rowsById = new Map();
 const truncatedDates = [];
 let totalCountFromApi = 0;
 let requests = 0;
+let rowsReceived = 0;
+let datesWithResults = 0;
+let firstResponseSummary;
+let firstBodyKeys = [];
 
 for (let date = new Date(firstDate); date <= lastDate; date.setUTCDate(date.getUTCDate() + 1)) {
   const eventStartDate = formatDate(date);
@@ -60,6 +64,11 @@ for (let date = new Date(firstDate); date <= lastDate; date.setUTCDate(date.getU
     dateTotalCount = Number(body?.totalCount || 0);
     const rows = body?.items?.item;
     const items = Array.isArray(rows) ? rows : rows ? [rows] : [];
+    if (!firstResponseSummary) {
+      firstResponseSummary = { resultCode: header?.resultCode ?? null, resultMsg: header?.resultMsg ?? null };
+      firstBodyKeys = body && typeof body === 'object' ? Object.keys(body) : [];
+    }
+    rowsReceived += items.length;
     pagesFetched = pageNo;
     for (const item of items) {
       if (item?.contentid && item?.title) rowsById.set(String(item.contentid), { ...item, contentid: String(item.contentid) });
@@ -70,6 +79,7 @@ for (let date = new Date(firstDate); date <= lastDate; date.setUTCDate(date.getU
     if (pageNo === maxPagesPerDate) truncatedDates.push(eventStartDate);
   }
   totalCountFromApi += dateTotalCount;
+  if (dateTotalCount > 0) datesWithResults += 1;
 }
 
 const items = [...rowsById.values()]
@@ -77,7 +87,7 @@ const items = [...rowsById.values()]
   .sort((a, b) => String(a.eventstartdate || '').localeCompare(String(b.eventstartdate || '')));
 
 if (!items.length) {
-  throw new Error(`TourAPI returned no current or upcoming festivals after ${requests} date-based requests (${formatDate(firstDate)}–${formatDate(lastDate)}). Previous published data was left untouched.`);
+  throw new Error(`TourAPI returned no publishable festivals after ${requests} date-based requests (${formatDate(firstDate)}–${formatDate(lastDate)}). Diagnostics: totalCount=${totalCountFromApi}, rowsReceived=${rowsReceived}, uniqueValidItems=${rowsById.size}, datesWithResults=${datesWithResults}, firstResponse=${JSON.stringify(firstResponseSummary)}, bodyKeys=${firstBodyKeys.join(',')}. Previous published data was left untouched.`);
 }
 
 const output = {
