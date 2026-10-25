@@ -55,6 +55,17 @@ for (let date = new Date(firstDate); date <= lastDate; date.setUTCDate(date.getU
     if (!response.ok) throw new Error(`TourAPI returned HTTP ${response.status} for eventStartDate ${eventStartDate}, page ${pageNo}.`);
 
     const payload = await response.json();
+    const gatewayError = payload?.cmmMsgHeader;
+    if (gatewayError) {
+      const code = gatewayError.returnReasonCode || 'unknown';
+      const auth = gatewayError.returnAuthMsg || 'unknown';
+      const message = gatewayError.errMsg || 'no message';
+      throw new Error(`TourAPI gateway rejected the request: reasonCode=${code}, auth=${auth}, message=${message}. Verify the approved service and Decoding key in the TOURAPI_SERVICE_KEY secret.`);
+    }
+    if (!payload?.response?.body) {
+      const topLevelKeys = payload && typeof payload === 'object' ? Object.keys(payload).join(',') : typeof payload;
+      throw new Error(`Unexpected TourAPI JSON shape. Expected response.body, received top-level keys: ${topLevelKeys || '(none)'}. The request stopped before further date queries.`);
+    }
     const header = payload?.response?.header;
     if (header && header.resultCode !== '0000') {
       throw new Error(`TourAPI error ${header.resultCode} for eventStartDate ${eventStartDate}: ${header.resultMsg || 'unknown error'}`);
