@@ -1,0 +1,33 @@
+name: Refresh TourAPI festival data
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 19 * * 0'
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Fetch current and upcoming festivals from TourAPI
+        run: node scripts/fetch-festivals.mjs
+        env:
+          TOURAPI_SERVICE_KEY: ${{ secrets.TOURAPI_SERVICE_KEY }}
+      - name: Publish the refreshed JSON snapshot
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/festivals.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Refresh TourAPI festival data"
+            git push
+          fi
