@@ -55,6 +55,9 @@ for (let date = new Date(firstDate); date <= lastDate; date.setUTCDate(date.getU
     if (!response.ok) throw new Error(`TourAPI returned HTTP ${response.status} for eventStartDate ${eventStartDate}, page ${pageNo}.`);
 
     const payload = await response.json();
+    if (payload?.resultCode || payload?.resultMsg) {
+      throw new Error(`TourAPI gateway error: resultCode=${payload.resultCode || 'unknown'}, resultMsg=${payload.resultMsg || 'no message'}. Check the endpoint, API service approval, and the Decoding key saved as TOURAPI_SERVICE_KEY. The request stopped before further date queries.`);
+    }
     const gatewayError = payload?.cmmMsgHeader;
     if (gatewayError) {
       const code = gatewayError.returnReasonCode || 'unknown';
