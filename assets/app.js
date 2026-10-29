@@ -19,7 +19,9 @@
   const allRecords=()=>readJSON(KEYS.items,activeRecords);
   const currentMode=()=>safeGet(KEYS.mode, safeGet(KEYS.apiKey)?'live':'published');
   const categoryOf=item=>item.category||item.cat3name||item.cat2name||'축제';
-  const regionOf=item=>item.region||((item.addr1||'').match(/(서울|부산|대구|인천|광주|대전|울산|세종|경기|강원|충북|충남|전북|전남|경북|경남|제주)/)||[])[0]||'전국';
+  const REGIONS=['서울','부산','대구','인천','광주','대전','울산','세종','경기','강원','충북','충남','전북','전남·광주','경북','경남','제주'];
+  const REGION_PREFIXES=[['전남광주통합특별시','전남·광주'],['서울특별시','서울'],['부산광역시','부산'],['대구광역시','대구'],['인천광역시','인천'],['광주광역시','광주'],['대전광역시','대전'],['울산광역시','울산'],['세종특별자치시','세종'],['경기도','경기'],['강원특별자치도','강원'],['강원도','강원'],['충청북도','충북'],['충청남도','충남'],['전북특별자치도','전북'],['전라북도','전북'],['전라남도','전남·광주'],['경상북도','경북'],['경상남도','경남'],['제주특별자치도','제주']];
+  const regionOf=item=>{const saved=String(item.region||'');if(REGIONS.includes(saved))return saved;const address=String(item.addr1||'');return REGION_PREFIXES.find(([prefix])=>address.startsWith(prefix))?.[1]||'전국';};
   const escapeHTML=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const dateText=value=>String(value||'').length===8?`${value.slice(0,4)}.${value.slice(4,6)}.${value.slice(6,8)}`:'일정 확인';
   const rangeText=item=>`${dateText(item.eventstartdate)} — ${dateText(item.eventenddate)}`;
